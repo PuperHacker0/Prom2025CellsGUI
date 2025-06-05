@@ -16,7 +16,7 @@ import time
 from queue import Queue, Empty, Full
 
 class Datalogger():
-    def __init__(self, filename = 'session_log.txt', buffer_size = 10, buff_sampl_del_active = False, buff_sampl_freq = 100, debug_mode = False):
+    def __init__(self, filename = 'session_log.txt', buffer_size = 10, buffer_sampling_limit = True, buff_sampl_freq = 10, debug_mode = False):
         #Create the inner queue where the data will be stored
         self.buffer = Queue()
         self.buffer_limit = buffer_size
@@ -28,7 +28,7 @@ class Datalogger():
         self.thread = threading.Thread(target = self.__write_to_file)
         self.flush_buffer = False
 
-        self.buffer_sampling_delay_active = buff_sampl_del_active
+        self.buffer_sampling_freq_limited = buffer_sampling_limit
         self.buffer_sampling_frequency = buff_sampl_freq #Check the queue for messages 5 times per second IF ENABLED
 
         self.debug_mode = debug_mode
@@ -41,6 +41,8 @@ class Datalogger():
             print('[DEBUG] Datalogger: Datalogger thread has started')
     
     def stop(self):
+        self.write('-->DATALOGGER STOPPED<--')
+
         time.sleep(1) #For some reason it needs some time before we can kill it
         self.flush_buffer = True
 
@@ -81,7 +83,7 @@ class Datalogger():
                 f.close()
 
                 if self.debug_mode:
-                    print("[DEBUG] Datalogger: Successfully wrote a chunk to file")
+                    print("[DEBUG] Datalogger: Successfully wrote queue to file")
                     self.write('[DEBUG] Datalogger: (delayed message) Wrote chunk of size ' + str(self.buffer_limit))
 
                 #Terminate the thread right after the queue has been emptied so that the remaining messages won't be lost
@@ -93,8 +95,9 @@ class Datalogger():
                     
                     return
                     
-                if self.buffer_sampling_delay_active:
+                if self.buffer_sampling_freq_limited:
                     time.sleep(1 / self.buffer_sampling_frequency) #buffer sampling interval
+                #Don't race with the other threads to ask if the buffer has been updated
 
     def __get_timestamp_string(self):
         return time.strftime("[%H:%M:%S]", time.localtime())

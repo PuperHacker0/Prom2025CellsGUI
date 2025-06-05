@@ -40,7 +40,7 @@ class SerialReader(threading.Thread):
 
     def connect_to_port(self):
         if self.COM_port_number != -1:
-            self.COM_port_number = "COM" + str(self.specified_port)
+            self.COM_port_number = "COM" + str(self.COM_port_number)
         else:
             self.COM_port_number = None
 
@@ -84,6 +84,7 @@ class SerialReader(threading.Thread):
 
                     if data == '}':
                         continue
+                    
                     if len(data) != 0:
                         if self.debug_mode:
                             print('[DEBUG] Read message: ' + str(data))
@@ -97,11 +98,14 @@ class SerialReader(threading.Thread):
                             print("[CRITICAL] Haven't received message from port for 10 seconds. Retrying in 5 sec...")
                             time.sleep(5)
             except Exception as e:
-                print(f"[CRITICAL] Error {e} while reading data from port")
+                if str(e) == "byref() argument must be a ctypes instance, not 'NoneType'":
+                    pass
+                else:
+                    print(f"[CRITICAL] Error ({e}) while reading data from port")
 
     def get_message(self): #Return 1 message at a time
         try:
-            return self.queue.get_nowait() #Don't stall the threads
+            return self.queue.get_nowait() #Non-blocking
         except Exception as e: #Queue is empty
             return None
     
