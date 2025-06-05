@@ -71,7 +71,7 @@ class SerialReader(threading.Thread):
                     time.sleep(5)
         
         if conn_success and self.debug_mode:
-            print("[DEBUG] Successfully established connection to", self.COM_port_number)
+            print("[DEBUG] SerialReader: Successfully established connection to", self.COM_port_number)
 
     def async_read_from_port(self):
         previous_successful_read_time = time.time() #Start time at the beginning
@@ -99,13 +99,12 @@ class SerialReader(threading.Thread):
             except Exception as e:
                 print(f"[CRITICAL] Error {e} while reading data from port")
 
-    def get_message(self):
-        if not self.queue.empty():
-            return self.queue.get_nowait()
-        else:
+    def get_message(self): #Return 1 message at a time
+        try:
+            return self.queue.get_nowait() #Don't stall the threads
+        except Exception as e: #Queue is empty
             return None
-        #Return 1 message at a time
     
-    #Unused
+    #For testing/debugging
     def _debug_write_to_port(self, message):
         self.serial_port.write(message)
