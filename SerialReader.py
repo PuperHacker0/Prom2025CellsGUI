@@ -91,14 +91,14 @@ class SerialReader(threading.Thread):
 
                         self.queue.put(data)
                         previous_successful_read_time = time.time()
-                    else:
-                        current_time = time.time()
+                else:
+                    current_time = time.time()
 
-                        if current_time - previous_successful_read_time > 10:
-                            print("[CRITICAL] Haven't received message from port for 10 seconds. Retrying in 5 sec...")
-                            time.sleep(5)
+                    if current_time - previous_successful_read_time > 10:
+                        print("[CRITICAL] Haven't received message from port for 10 seconds. Retrying soon...")
+                        time.sleep(10)
             except Exception as e:
-                if str(e) == "byref() argument must be a ctypes instance, not 'NoneType'":
+                if str(e) in ["byref() argument must be a ctypes instance, not 'NoneType'", "ReadFile failed (OSError(9, 'The handle is invalid.', None, 6))"]:
                     pass
                 else:
                     print(f"[CRITICAL] Error ({e}) while reading data from port")

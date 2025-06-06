@@ -1,15 +1,40 @@
+<OutlinedLabel@Label>:
+    halign: 'center'
+    valign: 'middle'
+    text_size: self.size
+
+    font_size: 20
+    background_color: 1, 1, 1, 1
+    border_color: 1, 1, 1, 1
+    border_width: 2
+    color: 1, 1, 0, 1
+    size_hint: 1, 1 #Expand to take up space in the segment evenly (depth 3)
+    padding: 12, 6
+    
+    canvas.before:
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: self.border_color
+        Line:
+            rectangle: (self.x, self.y, self.width, self.height)
+            width: self.border_width
+
 <Segment@GridLayout>:
     cols: 2
     rows: 9
-    spacing: 2
-    padding: 2
-    size_hint: None, None
-    size: self.minimum_size
+    spacing: 0
+    padding: 8
+    size_hint: 1, 1 #Fill space of the segment grid evenly (depth 2)
 
 <SegmentGrid>:
     GridLayout:
         cols: 4
         rows: 2
-        spacing: 1
-        padding: 1
+        spacing: 0
+        padding: 8
+        size_hint: 1, 1 #Take up the entire window (depth 1)
         id: segment_container

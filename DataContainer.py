@@ -1,5 +1,9 @@
 import json
 
+MAX_CELL_VOLTAGE = 4.3
+MIN_CELL_VOLTAGE = 3.0
+MAX_CELL_TEMP = 60
+
 class DataContainer():
     def __init__(self, debug):
         self.segment_sensors = 16
@@ -8,14 +12,23 @@ class DataContainer():
         self.debug_mode = debug
         
         self.last_updated_list_ID = 0
-        self.humidities = [0 for i in range(self.segment_sensors)] #16 numbers ID1
-        self.temperatures = [0 for i in range(self.cell_pairs)] #140 numbers ID2
-        self.voltages = [0 for i in range(self.cell_pairs)] #140 numbers ID3
-        self.pec_errors = [0 for i in range(self.segment_sensors)] #16 numbers ID4
-        self.balancing = [0 for i in range(self.cell_pairs)] #140 numbers ID5
-        self.accumulator_info = {} #ID6
-        self.isabelle_info = {} #ID7
-        self.elcon_info = {} #ID8
+
+        self.temperatures = [0 for i in range(self.cell_pairs)] #140 numbers, ID2
+        self.voltages = [0 for i in range(self.cell_pairs)] #140 numbers, ID3
+        self.volt_or_temp_warnings = [False for _ in range(self.cell_pairs)]
+
+        self.humidities = [0 for i in range(self.segment_sensors)] #16 numbers, ID1
+        self.pec_errors = [0 for i in range(self.segment_sensors)] #16 numbers, ID4
+        self.balancing = [0 for i in range(self.cell_pairs)] #140 numbers, ID5
+        self.accumulator_info = {} #Dict, ID6
+        self.isabelle_info = {} #Dict, ID7
+        self.elcon_info = {} #Dict, ID8
+
+    def generate_cell_temp_volt_warnings(self):
+        #This is called when voltages OR temps have just been updated and we want to see whether any cell has gone bad
+        for idx in range(self.cell_pairs):
+            self.volt_or_temp_warnings[idx] = ((self.voltages[idx] > MAX_CELL_VOLTAGE) or\
+                (self.voltages[idx] < MIN_CELL_VOLTAGE) or (self.temperatures[idx] > MAX_CELL_TEMP))
 
     def string_to_list(self, s):
         return [int(n) for n in s[1:len(s) - 1].split(',')] #Remove the brackets and convert remaining numbers to ints, pack them in a list
@@ -46,8 +59,9 @@ class DataContainer():
                     message_content += '}'
 
                 if self.debug_mode:
-                    print("Message type:", message_type)
-                    print("Message content:", message_content, '\n')
+                    #print("Message type:", message_type)
+                    #print("Message content:", message_content, '\n')
+                    pass
 
                 if message_type == 'Humidities': #TODO
                     self.last_updated_list_ID = 1
@@ -55,22 +69,24 @@ class DataContainer():
                 elif message_type == 'Temperatures':
                     self.last_updated_list_ID = 2
                     self.temperatures = self.string_to_list(message_content)
+                    self.generate_cell_temp_volt_warnings()
                 elif message_type == 'Voltages':
                     self.last_updated_list_ID = 3
                     self.voltages = self.string_to_list(message_content)
-                elif message_type == 'PEC_Errors':
+                    self.generate_cell_temp_volt_warnings()
+                elif message_type == 'PEC_Errors': #TODO
                     self.last_updated_list_ID = 4
                     self.pec_errors = self.string_to_list(message_content)
-                elif message_type == 'Balancing':
+                elif message_type == 'Balancing': #TODO
                     self.last_updated_list_ID = 5
                     self.balancing = self.string_to_list(message_content)
-                elif message_type == 'AccumulatorInfo':
+                elif message_type == 'AccumulatorInfo': #TODO
                     self.last_updated_list_ID = 6
                     self.accumulator_info = self.string_to_dict(message_content) #Restore end char for dict form
-                elif message_type == 'IsabelleInfo':
+                elif message_type == 'IsabelleInfo': #TODO
                     self.last_updated_list_ID = 7
                     self.isabelle_info = self.string_to_dict(message_content)
-                elif message_type == 'ElconInfo':
+                elif message_type == 'ElconInfo': #TODO
                     self.last_updated_list_ID = 8
                     self.elcon_info = self.string_to_dict(message_content)
                 else:
