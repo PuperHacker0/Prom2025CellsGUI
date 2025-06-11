@@ -10,18 +10,6 @@
     color: 1, 1, 0, 1
     size_hint: 1, 1 #Expand to take up space in the segment evenly (depth 3)
     padding: 12, 6
-    
-    canvas.before:
-        Color:
-            rgba: self.background_color
-        Rectangle:
-            pos: self.pos
-            size: self.size
-        Color:
-            rgba: self.border_color
-        Line:
-            rectangle: (self.x, self.y, self.width, self.height)
-            width: self.border_width
 
 <Segment@GridLayout>:
     cols: 2
