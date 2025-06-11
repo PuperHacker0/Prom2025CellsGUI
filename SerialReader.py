@@ -82,7 +82,6 @@ class SerialReader(threading.Thread):
                     #Don't read_until() '\n' or '}' because for some reason it stalls
                     #Just read all the data there is to read and then interpret it (in_waiting)
                     data = self.serial_port.read(self.serial_port.in_waiting).decode('utf-8').replace("\n", "")
-                    #print('finished data take')
 
                     if data == '}':
                         continue
