@@ -15,10 +15,10 @@
     cols: 2
     rows: 9
     spacing: 0
-    padding: 8
+    padding: 10
     size_hint: 1, 1 #Fill space of the segment grid evenly (depth 2)
 
-<SegmentGrid>:
+<MainLayout>:
     GridLayout:
         cols: 4
         rows: 2
@@ -26,3 +26,8 @@
         padding: 8
         size_hint: 1, 1 #Take up the entire window (depth 1)
         id: segment_container
+        size_hint_x: 0.85
+    BoxLayout:
+        orientation: 'vertical'
+        id: info_panel
+        size_hint_x: 0.15

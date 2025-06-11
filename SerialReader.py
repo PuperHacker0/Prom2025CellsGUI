@@ -91,7 +91,7 @@ class SerialReader(threading.Thread):
                         if self.debug_mode:
                             print('[DEBUG] Read message: ' + str(data))
 
-                        self.queue.put_nowait(data) ######!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        self.queue.put_nowait(data)
                         previous_successful_read_time = time.time()
                 else:
                     current_time = time.time()
@@ -107,7 +107,6 @@ class SerialReader(threading.Thread):
 
     def get_message(self): #Return 1 message at a time
         try:
-            #print('trying to get, queue size estimated at ' + str(self.queue.qsize())) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
             return self.queue.get_nowait() #Non-blocking
         except Exception as e: #Queue is empty
             return None

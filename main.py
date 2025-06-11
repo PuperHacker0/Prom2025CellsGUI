@@ -70,7 +70,7 @@ class Segment(GridLayout):
         #Don't re-create and re-link 142 widgets, just create new segments and add them to the already existing structure for efficiency
 
         try:
-            font_size = 30 #Large numbers
+            font_size = 24 #Large numbers
             border_color = (1, 1, 1, 0.7) #Faded white outline
             border_width = 1.5
             size_hint = (1, 1) # Fill cell out
@@ -91,9 +91,9 @@ class Segment(GridLayout):
         except Exception as e:
             print(f'[CRITICAL] Failed to create/update one or more segment labels ({e})')
 
-class SegmentGrid(BoxLayout):
+class MainLayout(BoxLayout):
     def __init__(self, **kwargs):
-        super(SegmentGrid, self).__init__(**kwargs)
+        super(MainLayout, self).__init__(**kwargs)
         self.segments = []
 
         # Create 8 segments to begin with
@@ -103,8 +103,13 @@ class SegmentGrid(BoxLayout):
 
             #ids is the dict which maps to the id segment_container which contains the segment layout
             self.ids.segment_container.add_widget(segment)
-            self.segments.append(segment) #TODO theoretically not needed UNLESS WE'RE UPDATING???
-    
+            self.segments.append(segment)
+        
+        for i in range(16): #Placeholders at first
+            label = OutlinedLabel(text = 'STATUS DATA ' + str(i), font_size = 22, border_color = (1, 1, 1, 0.7),\
+                border_width = 2, size_hint = (1, 1), color = (1, 1, 1, 1), background_color = (0.1, 0.1, 0.1, 1))
+            self.ids.info_panel.add_widget(label)
+
     def get_label_text_from_data(self, volts, temps, x, y):
         #Special cases: top right (2) and bottom left (2) unused cells
         if (x == 3 and (y == 0 or y == 1)) or (x == 7 and (y == 16 or y == 17)):
@@ -142,6 +147,28 @@ class SegmentGrid(BoxLayout):
             (a, b) = self.get_segment_1D_range(i) #Pass the part of the warnings array that concerns this segment
             self.segments[i].configure_cells(segment_texts, warnings[a:b], i)
 
+    def update_info_panel(self, data_container):
+        self.ids.info_panel.clear_widgets() #Erase previous labels to update
+        
+        #These are duplicate settings for now, we can generalize them in the class in the future
+        font_size = 22
+        border_color = (1, 1, 1, 0.7) #Faded white outline
+        border_width = 2
+        size_hint = (1, 1) # Fill cell out
+        text_color = (1, 1, 1, 1) #White text
+        background_color = (0.1, 0.1, 0.1, 1)
+
+        data_categories = data_container.info_panel_data_categories
+        data_categories = [x.replace('_', ' ') for x in data_categories] #.upper was cool but the text wouldn't fit
+        #Replace the underscores so that the data isn't hard on the eye
+        #try any other transformation for the data categories here
+
+        texts = [data_categories[i] + ': ' + data_container.info_panel_data_values[i] for i in range(16)]
+
+        for i in range(16): #TODO these should not be hardcoded
+            self.ids.info_panel.add_widget(OutlinedLabel(text = texts[i], color = text_color, background_color = background_color,\
+                font_size = font_size, border_color = border_color, border_width = border_width, size_hint = size_hint))
+    
     #TODO tap a cell and you also get general SEGMENT HUMIDIDTY, balancing, etc
                 
 class MyApp(App):
@@ -161,13 +188,13 @@ class MyApp(App):
         self.icon = 'icon.ico' #When running app as a script, the taskbar icon will be the default python logo
         #But when running as an exectutable, it will automatically sync to the window icon
 
-        self.segment_grid = SegmentGrid() #widget!
+        self.main_layout = MainLayout() #widget!
 
         self.data_container = DataContainer(debug = DEBUG_MODE)
         self.data_update_thread = threading.Thread(target = self.update_data)
         self.data_update_thread.start()
 
-        return self.segment_grid
+        return self.main_layout
     
     def on_request_close(self, *largs, **kwargs): #Call "destructor" from UI button
         #Kills the threads when closing the app (so that writing to files and other tasks finish)
@@ -195,9 +222,11 @@ class MyApp(App):
                     #TODO then update all cells accordingly (flag e.g. voltage, then array[])
                 
                 #Update individual cells if voltages of tempratures update
-                if self.data_container.last_updated_list_ID in [2,3]:
-                    #self.segment_grid.update_segments_volts_temps(self.data_container)
-                    Clock.schedule_once(lambda dt: self.segment_grid.update_segments_volts_temps(self.data_container)) #For thread safety
+                if self.data_container.last_updated_list_ID in [2,3]: #TEMPERATURE AND VOLTAGE CELL UPDATES
+                    #self.main_layout.update_segments_volts_temps(self.data_container)
+                    Clock.schedule_once(lambda dt: self.main_layout.update_segments_volts_temps(self.data_container)) #For thread safety
+                elif self.data_container.last_updated_list_ID in [6, 7, 8]: #INFO PANEL UPDATES
+                    Clock.schedule_once(lambda dt: self.main_layout.update_info_panel(self.data_container))
 
                 #More updates... TODO
     

@@ -84,7 +84,7 @@ class Datalogger():
 
                 if self.debug_mode:
                     print("[DEBUG] Datalogger: Successfully wrote queue to file")
-                    self.write('[DEBUG] Datalogger: (delayed message) Wrote chunk of size ' + str(self.buffer_limit))
+                    #self.write('[DEBUG] Datalogger: Wrote ' + str(self.buffer_limit) + ' messages to file')
 
                 #Terminate the thread right after the queue has been emptied so that the remaining messages won't be lost
                 if self.flush_buffer:
