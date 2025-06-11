@@ -79,8 +79,10 @@ class SerialReader(threading.Thread):
         while self.running:
             try:
                 if self.serial_port.in_waiting > 0:
-                    #Read until } (end of message) and remove intermittent newlines
-                    data = self.serial_port.read_until(b'}').decode('utf-8').replace("\n", "")
+                    #Don't read_until() '\n' or '}' because for some reason it stalls
+                    #Just read all the data there is to read and then interpret it (in_waiting)
+                    data = self.serial_port.read(self.serial_port.in_waiting).decode('utf-8').replace("\n", "")
+                    #print('finished data take')
 
                     if data == '}':
                         continue
@@ -89,7 +91,7 @@ class SerialReader(threading.Thread):
                         if self.debug_mode:
                             print('[DEBUG] Read message: ' + str(data))
 
-                        self.queue.put(data)
+                        self.queue.put_nowait(data) ######!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         previous_successful_read_time = time.time()
                 else:
                     current_time = time.time()
@@ -105,6 +107,7 @@ class SerialReader(threading.Thread):
 
     def get_message(self): #Return 1 message at a time
         try:
+            #print('trying to get, queue size estimated at ' + str(self.queue.qsize())) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
             return self.queue.get_nowait() #Non-blocking
         except Exception as e: #Queue is empty
             return None

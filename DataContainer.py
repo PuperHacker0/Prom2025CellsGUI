@@ -31,7 +31,7 @@ class DataContainer():
                 (self.voltages[idx] < MIN_CELL_VOLTAGE) or (self.temperatures[idx] > MAX_CELL_TEMP))
 
     def string_to_list(self, s):
-        return [int(n) for n in s[1:len(s) - 1].split(',')] #Remove the brackets and convert remaining numbers to ints, pack them in a list
+        return [float(n) for n in s[1:len(s) - 1].split(',')] #Remove the brackets and convert remaining numbers to floats, pack them in a list
     
     def string_to_dict(self, s):
         return json.loads(s)
@@ -68,11 +68,23 @@ class DataContainer():
                     self.humidities = self.string_to_list(message_content)
                 elif message_type == 'Temperatures':
                     self.last_updated_list_ID = 2
-                    self.temperatures = self.string_to_list(message_content)
+
+                    #Don't update with new faulty input if there is an issue with it
+                    new_temps = self.string_to_list(message_content)[:self.cell_pairs]
+                    if len(new_temps) < self.cell_pairs:
+                        raise Exception('Too few temperature values provided!')
+                    
+                    self.temperatures = new_temps
                     self.generate_cell_temp_volt_warnings()
                 elif message_type == 'Voltages':
                     self.last_updated_list_ID = 3
-                    self.voltages = self.string_to_list(message_content)
+                    
+                    #Don't update with new faulty input if there is an issue with it
+                    new_volts = self.string_to_list(message_content)[:self.cell_pairs]
+                    if len(new_volts) < self.cell_pairs:
+                        raise Exception('Too few voltage values provided!')
+                    
+                    self.voltages = new_volts
                     self.generate_cell_temp_volt_warnings()
                 elif message_type == 'PEC_Errors': #TODO
                     self.last_updated_list_ID = 4

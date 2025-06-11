@@ -1,13 +1,16 @@
 #ATTENTION!!!!!!!!!!!!!!!!!!!!!!!!COM PORT FIXED TO 1 for virtual testing
 
 #Important: changing the order of (0), (1), (2), (3) results in undefined behavior
-#TODO everything fine if less than 140 nums provided?
+
 #TODO take all graphics related classes to a new class
+#TODO improve handling of unused cells, conditions are scattered all around (e.g. change in position!!!)
+#TODO maybe the order of traversal of the cells should also be a function too in case the layout is different or the sensors are positioned differently
 
 #Define fundamental variables of the app (0)
 FORCE_WINDOW_SIZE = None #Overrides forced fullscreen 
 FORCE_FULLSCREEN = False
 DEBUG_MODE = True
+CELL_VOLTAGE_DECIMALS = 1
 
 #First, set environment variables, these will lock first (1)
 import os
@@ -119,13 +122,15 @@ class SegmentGrid(BoxLayout):
 
         return a, b
 
+    def float_arr_to_n_decimals(self, floats, n):
+        return [int(f * 10**n) / 10**n for f in floats]
+
     def update_segments_volts_temps(self, data_container): #First obvious update function for each of the individual cells
         #Limit data count to cell_count if more values are provided
         cell_pairs = data_container.cell_pairs
-        volts = data_container.voltages[:cell_pairs]
-        temps = data_container.temperatures[:cell_pairs]
-        warnings = data_container.volt_or_temp_warnings[:cell_pairs] #This list is sure to be as large as the cell_pairs count
-        #because we generate it ourselves, but let's keep everything tidy and secure
+        volts = self.float_arr_to_n_decimals(data_container.voltages, CELL_VOLTAGE_DECIMALS)
+        temps = data_container.temperatures
+        warnings = data_container.volt_or_temp_warnings
 
         #Update each individual segment. Segments are built left to right, top to bottom
         # 1 2 3 4
