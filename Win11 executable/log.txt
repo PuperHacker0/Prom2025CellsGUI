@@ -1,0 +1,14 @@
+[22:48:57] <--DATALOGGER STARTED-->
+
+[22:48:58] {"AccumulatorInfo": {"Ams_Error": "0", "Imd_Error": "0", "AIR_P_Supp": "0", "AIR_M_Supp": "1", "AIR_P_State": "1", "AIR_M_State": "0", "over60_dclink": "1", "dc_dc_temp": "47.7530", "HVroom_humidity": "77", "precharge_voltage": "598.1199", "AIR_P_State_Int": "0"}}
+
+[22:48:59] {"Humidities": [77, 78, 72, 7, 31, 70, 97, 42, 18, 45, 47, 36, 19, 13, 12, 86]}
+
+[22:49:01] {"AccumulatorInfo": {"Ams_Error": "1", "Imd_Error": "0", "AIR_P_Supp": "0", "AIR_M_Supp": "1", "AIR_P_State": "1", "AIR_M_State": "1", "over60_dclink": "0", "dc_dc_temp": "9.8450", "HVroom_humidity": "80", "precharge_voltage": "573.4743", "AIR_P_State_Int": "0"}}
+
+[22:49:02] {"AccumulatorInfo": {"Ams_Error": "1", "Imd_Error": "0", "AIR_P_Supp": "0", "AIR_M_Supp": "1", "AIR_P_State": "1", "AIR_M_State": "0", "over60_dclink": "1", "dc_dc_temp": "86.6118", "HVroom_humidity": "7", "precharge_voltage": "279.2833", "AIR_P_State_Int": "1"}}
+
+[22:49:04] {"Balancing": [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1]}
+
+[22:49:04] -->DATALOGGER STOPPED<--
+
