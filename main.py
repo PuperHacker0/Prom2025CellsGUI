@@ -6,7 +6,7 @@
 #Important: changing the order of (0), (1), (2), (3) results in undefined behavior
 
 #Define fundamental variables of the app (0)
-FORCE_WINDOW_SIZE = None #Overrides forced fullscreen 
+FORCE_WINDOW_SIZE = None #Overrides forced fullscreen
 FORCE_FULLSCREEN = False
 DEBUG_MODE = True
 
@@ -20,8 +20,6 @@ import SetWindowSize #First set window size and other parameters because once ki
 WINDOW_SIZE = SetWindowSize.set_window_size(FORCE_WINDOW_SIZE, DEBUG_MODE, FORCE_FULLSCREEN)
 
 #Then, import everything kivy-related (3)
-#import kivy
-#from kivy.uix.recycleview import RecycleView
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.clock import Clock
@@ -44,8 +42,8 @@ class MyApp(App):
         self.running = True
 
         #Initialize and start the serial reader of the port and the data logger
-        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE, specified_port = 1)
-        self.data_logger = Datalogger("log.txt", debug_mode = DEBUG_MODE, buffer_size = 5) #Write every 3 messages
+        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE, specified_port = 1) #######################################FIXED! ATTENTION!
+        self.data_logger = Datalogger("log.txt", debug_mode = DEBUG_MODE, buffer_size = 5) #Write every 5 messages
 
         self.serial_reader.start()
         self.data_logger.start()
@@ -94,5 +92,5 @@ class MyApp(App):
                 #More updates... TODO
     
 if __name__ == '__main__':
-    #serial_reader, data_logger, and other threads are now defined inside the MyApp() class instead of inside main
+    #serial_reader, data_logger, and other threads are now defined inside the MyApp() class instead of inside of main
     MyApp().run()
