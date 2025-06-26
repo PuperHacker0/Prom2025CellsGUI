@@ -6,43 +6,39 @@ from kivy.graphics import Color, Rectangle, Line
 
 CELL_VOLTAGE_DECIMALS = 1
 
-def traversal_order_arr_idx(x, y): #ITERATOR FUNCTION!!!
-    #Note: the unused cells are assumed to be skipped here (is_unused_cell)
-    #Create the winding traversal order to display the corresponding cell data correctly
-    #Aside from the 4 unused cells in the grid, convert segment number x and cell number y into data array indexes
-    #Refer to the cells data order
-    #Segment real numbering: 8 7 6 5
-                            #1 2 3 4
-    #Here, 0 1 2 3
-        #4 5 6 7
-    result = 0
-    if x >= 4: #U shape (bottom segments)
-        result += 18 * (x - 4) #Add as many cells as are before us (bottom segments only)
+#Change this class if cell arrangement changes
+class CellArrangement:
+    def is_unused_cell_idx(x, y):
+        return (x == 3 and (y == 0 or y == 1)) or (x == 7 and (y == 16 or y == 17))
 
-        if y % 2 == 0: #y is even (left column going down)
-            result += y // 2
-        else:
-            result += 18 - (y + 1) // 2 #y is odd (right column going up)
-        
-        if result > 61: #-2 for the bottom 2 cells for the rightmost column
-            result -= 2
-    else: #Π shape (upper segments)
-        result += 18 * (4 + (3 - x)) #Add 4 bottom segment cells +whichever are up
+    def array_traversal_index_mapping(x, y):
+        #ITERATOR FUNCTION: Change the order of traversal function in case the layout or sensor positions change
+        #Here we create the standard winding order of traversal (see image)
 
-        if y % 2: #Right column going up (odds)
-            result += (18 - (y + 1)) // 2
-        else: #Left column going down (evens)
-            result += 9 + y // 2
+        result = 0
+        if x >= 4: #U shape (bottom segments)
+            result += 18 * (x - 4) #Add as many cells as are before us (bottom segments only)
 
-        if result > 80: #Subtract all 4 unused cells
-            result -= 4
-        else:
-            result -= 2 #Subtract only the bottom right 2 unused cells
-    return result
+            if y % 2 == 0: #y is even (left column going down)
+                result += y // 2
+            else:
+                result += 18 - (y + 1) // 2 #y is odd (right column going up)
+            
+            if result > 61: #-2 for the bottom 2 cells for the rightmost column
+                result -= 2
+        else: #Π shape (upper segments)
+            result += 18 * (4 + (3 - x)) #Add 4 bottom segment cells +whichever are up
 
-def is_unused_cell_idx(x, y):
-    return (x == 3 and (y == 0 or y == 1)) or (x == 7 and (y == 16 or y == 17))
-    #Modify this function to change the unused cell locations
+            if y % 2: #Right column going up (odds)
+                result += (18 - (y + 1)) // 2
+            else: #Left column going down (evens)
+                result += 9 + y // 2
+
+            if result > 80: #Subtract all 4 unused cells
+                result -= 4
+            else:
+                result -= 2 #Subtract only the bottom right 2 unused cells
+        return result
 
 class OutlinedLabel(Label):
     #Default settings
@@ -81,8 +77,8 @@ class Segment(GridLayout):
             
             for i in range(18):
                 background_color = (0, 0.2, 0, 1)
-
-                if (segment_number == 3 and (i == 0 or i == 1)) or (segment_number == 7 and (i == 16 or i == 17)):
+                    
+                if CellArrangement.is_unused_cell_idx(segment_number, i):
                     background_color = (0, 0, 0, 1) #Color unused cells black
                 
                 elif (warnings is not None) and i < len(warnings) and warnings[i]: #If there's an overtemp/overvolt warning, set the cell color to red
@@ -115,15 +111,14 @@ class MainLayout(BoxLayout):
 
     def get_label_text_from_data(self, volts, temps, x, y):
         #Special cases: top right (2) and bottom left (2) unused cells
-        if is_unused_cell_idx(x, y):
+        if CellArrangement.is_unused_cell_idx(x, y):
             return '' #Empty cell
         
         #For all the other cells, linearize the 2D indices to the 1D data arrays we have
         #Careful because the data array has 140 entries but the GUI has 144 cells (4 empty)
         #So we need to go 2 indices back in the array, for all the cells after the 2 top right unused ones
-        #arr_idx_1D = (18 * x) + y - 2 * int(x >= 3)
-        arr_idx_1D = traversal_order_arr_idx(x, y)
-        #print(f"({x}, {y}) got converted to {arr_idx_1D}")
+        arr_idx_1D = CellArrangement.array_traversal_index_mapping(x, y)
+
         return f"{volts[arr_idx_1D]}V | {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
 
     def get_segment_1D_range(self, i): #Filter the top right unused cells
@@ -173,18 +168,13 @@ class MainLayout(BoxLayout):
                 data_values[i] += 'V'
             elif data_categories[i] in ["Current", "Target_Current", "Output_Current"]:
                 data_values[i] += 'A'
-            #We can later assign postfixes to these too...
-            #"Ams_Error", "Imd_Error", "AIR_P_Supp", "AIR_M_Supp", "AIR_P_State", "AIR_M_State", "over60_dclink"
-            #"Elcon_connected", "Target_charge_state", "Elcon_charge_status"
+            #We can later assign postfixes to the other info panel variables too...
 
         #Then, process the data labels themselves now that a change here won't affect the data value processing
-        data_categories = [x.replace('_', ' ') for x in data_categories] #.upper was cool but the text wouldn't fit
-        #Replace the underscores so that the data isn't hard on the eye
+        data_categories = [x.replace('_', ' ') for x in data_categories] #Remove underscores, .upper() is another idea
 
         texts = [data_categories[i] + ': ' + data_values[i] for i in range(16)]
 
         for i in range(16): #TODO these should not be hardcoded
             self.ids.info_panel.add_widget(OutlinedLabel(text = texts[i], color = text_color, background_color = background_color,\
                 font_size = font_size, border_color = border_color, border_width = border_width, size_hint = size_hint))
-    
-    #TODO tap a cell and you also get general SEGMENT HUMIDIDTY, balancing, etc

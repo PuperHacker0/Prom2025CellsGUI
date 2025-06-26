@@ -1,7 +1,5 @@
 #ATTENTION, COM PORT FIXED TO 1 for virtual testing
-#TODO improve handling of unused cells, conditions are scattered all around (e.g. change in position!!!)
-#TODO maybe the order of traversal of the cells should also be a function too in case the layout is different or the sensors are positioned differently
-
+#TODO tap a cell and you also get general SEGMENT HUMIDIDTY, balancing, etc
 
 #Important: changing the order of (0), (1), (2), (3) results in undefined behavior
 
