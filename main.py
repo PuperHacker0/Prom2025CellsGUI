@@ -36,7 +36,7 @@ class MyApp(App):
         self.running = True
 
         #Initialize and start the serial reader of the port and the data logger
-        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE, specified_port = 1) #Change the input port to debug
+        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE) #, specified_port = 1) #Change the input port to debug
         self.data_logger = Datalogger("serial_input_log.txt", debug_mode = DEBUG_MODE, buffer_size = 10) #Write every n messages
 
         self.serial_reader.start()

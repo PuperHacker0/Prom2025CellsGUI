@@ -72,6 +72,14 @@ class DataContainer():
     def string_to_dict(self, s):
         return json.loads(s)
     
+    def remove_zeroes(self, list):
+        new_list = []
+        for i in list:
+            if i != 0:
+                new_list.append(i)
+        print(new_list)
+        return new_list
+
     def interpret_data(self, raw_data):
         d = raw_data.replace('\n', '').replace(' ', '') #remove all spaces and newlines (that are not needed anywhere)
 
@@ -115,7 +123,9 @@ class DataContainer():
                     self.last_updated_list_ID = 3
                     
                     #Don't update with new faulty input if there is an issue with it
-                    new_volts = self.string_to_list(message_content)[:self.cell_pairs]
+                    new_volts = self.remove_zeroes(self.string_to_list(message_content))[:self.cell_pairs]
+                    #We'll always be receiving 144 numbers, 4 of them are 0s (dead cells), so skip them and continue
+                    #Ensure then that we're sending 140 numbers only
                     
                     if len(new_volts) < self.cell_pairs:
                         raise Exception('Too few voltage values provided!')

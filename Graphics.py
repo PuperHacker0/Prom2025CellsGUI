@@ -4,7 +4,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ListProperty, NumericProperty
 from kivy.graphics import Color, Rectangle, Line
 
-CELL_VOLTAGE_DECIMALS = 1
+CELL_VOLTAGE_DECIMALS = 3
 
 #Change this class if cell arrangement changes
 class CellArrangement:
@@ -122,7 +122,7 @@ class MainLayout(BoxLayout):
         if temps[arr_idx_1D] == '-': #If temp sensor unavailable, return just the voltage
             return f"{volts[arr_idx_1D]}V"
         else:
-            return f"{volts[arr_idx_1D]}V | {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
+            return f"{volts[arr_idx_1D]}V   {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
 
     def get_segment_1D_range(self, i): #Filter the top right unused cells
         a = 18 * i - 2 * int(i >= 3)
