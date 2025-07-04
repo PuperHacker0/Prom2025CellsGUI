@@ -119,7 +119,10 @@ class MainLayout(BoxLayout):
         #So we need to go 2 indices back in the array, for all the cells after the 2 top right unused ones
         arr_idx_1D = CellArrangement.array_traversal_index_mapping(x, y)
 
-        return f"{volts[arr_idx_1D]}V | {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
+        if temps[arr_idx_1D] == '-': #If temp sensor unavailable, return just the voltage
+            return f"{volts[arr_idx_1D]}V"
+        else:
+            return f"{volts[arr_idx_1D]}V | {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
 
     def get_segment_1D_range(self, i): #Filter the top right unused cells
         a = 18 * i - 2 * int(i >= 3)
@@ -131,6 +134,7 @@ class MainLayout(BoxLayout):
         return [int(f * 10**n) / 10**n for f in floats]
 
     def update_segments_volts_temps(self, data_container): #First obvious update function for each of the individual cells
+        #print("\n\nUPDATING VOLTS OR TEMPS\n\n")
         #Limit data count to cell_count if more values are provided
         cell_pairs = data_container.cell_pairs
         volts = self.float_arr_to_n_decimals(data_container.voltages, CELL_VOLTAGE_DECIMALS)

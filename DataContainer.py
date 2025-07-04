@@ -37,8 +37,9 @@ class DataContainer():
     def generate_cell_temp_volt_warnings(self):
         #This is called when voltages OR temps have just been updated and we want to see whether any cell has gone bad
         for idx in range(self.cell_pairs):
-            self.volt_or_temp_warnings[idx] = ((self.voltages[idx] > MAX_CELL_VOLTAGE) or\
-                (self.voltages[idx] < MIN_CELL_VOLTAGE) or (self.temperatures[idx] > MAX_CELL_TEMP))
+            self.volt_or_temp_warnings[idx] = ((self.voltages[idx] > MAX_CELL_VOLTAGE) or (self.voltages[idx] < MIN_CELL_VOLTAGE)\
+                                               or (self.temperatures[idx] != '-' and self.temperatures[idx] > MAX_CELL_TEMP))
+            #Make sure to ignore the dashes in the places where the temperature is 0 or 255, only process cells with a value
             
     def update_info_panel_data_values(self):
         data_range = (None, None)
@@ -71,18 +72,11 @@ class DataContainer():
     def string_to_dict(self, s):
         return json.loads(s)
     
-    MESSAGE_INTERPRETATION_FAILURE_COUNT = 0
     def interpret_data(self, raw_data):
         d = raw_data.replace('\n', '').replace(' ', '') #remove all spaces and newlines (that are not needed anywhere)
-        
-        if d[0] != '{':
-            print('[DEBUG] Message not starting with { found, assumed first message and skipped')
-            MESSAGE_INTERPRETATION_FAILURE_COUNT += 1
 
-            if MESSAGE_INTERPRETATION_FAILURE_COUNT >= 10:
-                print('[CRITICAL] >=10 messages in a row not interpreted correctly. Check data format...')
-                MESSAGE_INTERPRETATION_FAILURE_COUNT = 0
-            
+        if d[0] != '{':
+            print('[DEBUG] Message not starting with { found in queue, check data format!')
             return
         else:
             try:
@@ -91,12 +85,12 @@ class DataContainer():
                 message_content = d[((3 + len(message_type)) + 1):len(d) - 1] #Get second part, (first part + 3 chars) and remove the }
 
                 if self.debug_mode:
-                    #print("Message type:", message_type)
+                    print("Message type:", message_type)
                     #print("Message content:", message_content, '\n')
-                    pass
+                    #pass
 
                 if message_type == 'Humidities': #TODO
-                    print('Read humidities, ignored for now...')
+                    #print('Read humidities, ignored for now...')
                     return
                     self.last_updated_list_ID = 1
                     self.humidities = self.string_to_list(message_content)
@@ -105,28 +99,36 @@ class DataContainer():
 
                     #Don't update with new faulty input if there is an issue with it
                     new_temps = self.string_to_list(message_content)[:self.cell_pairs]
+
                     if len(new_temps) < self.cell_pairs:
                         raise Exception('Too few temperature values provided!')
                     
                     self.temperatures = new_temps
-                    self.generate_cell_temp_volt_warnings()
+
+                    for i in range(len(self.temperatures)):
+                        if self.temperatures[i] == 0 or self.temperatures[i] == 255:
+                            self.temperatures[i] = '-' #Remove the readings in the cells where there are no temp sensors
+                    
+                    self.generate_cell_temp_volt_warnings() #First remove the 0 readings then proceed
+
                 elif message_type == 'Voltages':
                     self.last_updated_list_ID = 3
                     
                     #Don't update with new faulty input if there is an issue with it
                     new_volts = self.string_to_list(message_content)[:self.cell_pairs]
+                    
                     if len(new_volts) < self.cell_pairs:
                         raise Exception('Too few voltage values provided!')
                     
                     self.voltages = new_volts
                     self.generate_cell_temp_volt_warnings()
                 elif message_type == 'PEC_Errors': #TODO
-                    print('Read PEC_Errors, ignored for now...')
+                    #print('Read PEC_Errors, ignored for now...')
                     return
                     self.last_updated_list_ID = 4
                     self.pec_errors = self.string_to_list(message_content)
                 elif message_type == 'Balancing': #TODO
-                    print('Read balancing, ignored for now...')
+                    #print('Read balancing, ignored for now...')
                     pass
                     self.last_updated_list_ID = 5
                     self.balancing = self.string_to_list(message_content)
@@ -145,7 +147,7 @@ class DataContainer():
                 else:
                     raise Exception('Unknown data identifier')
             except Exception as e:
-                print(f'[CRITICAL] Failed to interpret message ({e})')
+                print(f'[CRITICAL] Failed to interpret message ({e}): ' + message_type)
 
     def get_last_updated_data(self):
         packet = [self.last_updated_list_ID]

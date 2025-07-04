@@ -74,35 +74,58 @@ class SerialReader(threading.Thread):
             print("[DEBUG] SerialReader: Successfully established connection to", self.COM_port_number)
 
     def async_read_from_port(self):
-        previous_successful_read_time = time.time() #Start time at the beginning
-        
+        previous_successful_read_time = time.time()
+        buffer = "" #Concatenated incoming data
+        brace_balance = 0 #Counter for balancing '{' and '}'
+        inside_json = False #Flag indicating we started collecting a JSON message
+
+        #Concatenate JSON input strings until the brackets are balanced, then enqueue it
         while self.running:
             try:
                 if self.serial_port.in_waiting > 0:
-                    #Don't read_until() '\n' or '}' because for some reason it stalls
-                    #Just read all the data there is to read and then interpret it (in_waiting)
-                    data = self.serial_port.read(self.serial_port.in_waiting).decode('utf-8').replace("\n", "")
+                    data = self.serial_port.read(self.serial_port.in_waiting).decode('utf-8')
+                    data = data.replace("\n", "").replace(" ", "").replace("\t", "") #Strip data of spaces and newlines
 
-                    if data == '}':
-                        continue
-                    
-                    if len(data) != 0:
-                        if self.debug_mode:
-                            print('[DEBUG] Read message: ' + str(data))
+                    for char in data:
+                        if char == '{':
+                            if not inside_json:
+                                inside_json = True
+                                buffer = "" #Start a new JSON message, anything that's still in the buffer and not sent is garbage
+                                brace_balance = 0 #if new reset it
+                            #Increment for every '{'
+                            brace_balance += 1
 
-                        self.queue.put_nowait(data)
-                        previous_successful_read_time = time.time()
+                        if inside_json:
+                            buffer += char
+
+                        if char == '}':
+                            brace_balance -= 1
+
+                            if brace_balance == 0 and inside_json:
+                                if self.debug_mode:
+                                    #print('[DEBUG] SerialReader: Complete JSON defragmentation: ' + buffer)
+                                    print('[DEBUG] SerialReader: Complete JSON defragmentation')
+
+                                self.queue.put_nowait(buffer)
+                                previous_successful_read_time = time.time()
+
+                                # Reset state for next message
+                                #buffer = "" Two messages might arrive at once, dont delete the others
+                                inside_json = False
+
                 else:
                     current_time = time.time()
-
                     if current_time - previous_successful_read_time > 10:
-                        print("[CRITICAL] Haven't received message from port for 10 seconds. Retrying soon...")
+                        print("[CRITICAL] Haven't received a message from port for 10 seconds. Retrying soon...")
                         time.sleep(10)
+
             except Exception as e:
-                if str(e) in ["byref() argument must be a ctypes instance, not 'NoneType'", "ReadFile failed (OSError(9, 'The handle is invalid.', None, 6))"]:
+                if str(e) in ["byref() argument must be a ctypes instance, not 'NoneType'", 
+                            "ReadFile failed (OSError(9, 'The handle is invalid.', None, 6))"]:
                     pass
                 else:
                     print(f"[CRITICAL] Error ({e}) while reading data from port")
+
 
     def get_message(self): #Return 1 message at a time
         try:
@@ -113,3 +136,7 @@ class SerialReader(threading.Thread):
     #For testing/debugging
     def _debug_write_to_port(self, message):
         self.serial_port.write(message)
+
+if __name__ == "__main__": #Sample code to debug serial input only
+    sr = SerialReader(specified_port = 1, debug_mode = True)
+    sr.start()

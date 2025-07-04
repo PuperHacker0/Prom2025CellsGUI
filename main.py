@@ -1,8 +1,4 @@
-#ATTENTION, COM PORT FIXED TO 1 for virtual testing
-#TODO tap a cell and you also get general SEGMENT HUMIDIDTY, balancing, etc
-
-#Important: changing the order of (0), (1), (2), (3) results in undefined behavior
-
+#Important: the order of (0), (1), (2), (3) is specific
 #Define fundamental variables of the app (0)
 FORCE_WINDOW_SIZE = None #Overrides forced fullscreen
 FORCE_FULLSCREEN = False
@@ -40,8 +36,8 @@ class MyApp(App):
         self.running = True
 
         #Initialize and start the serial reader of the port and the data logger
-        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE, specified_port = 1) #######################################FIXED! ATTENTION!
-        self.data_logger = Datalogger("log.txt", debug_mode = DEBUG_MODE, buffer_size = 5) #Write every 5 messages
+        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE, specified_port = 1) #Change the input port to debug
+        self.data_logger = Datalogger("serial_input_log.txt", debug_mode = DEBUG_MODE, buffer_size = 10) #Write every n messages
 
         self.serial_reader.start()
         self.data_logger.start()
@@ -82,7 +78,7 @@ class MyApp(App):
 
                 #3) Update the graphical interface accordingly by asking the DataContainer for info                
                 #Update individual cells if voltages of tempratures update
-                if self.data_container.last_updated_list_ID in [2,3]: #TEMPERATURE AND VOLTAGE CELL UPDATES
+                if self.data_container.last_updated_list_ID in [2, 3]: #TEMPERATURE AND VOLTAGE CELL UPDATES
                     Clock.schedule_once(lambda dt: self.main_layout.update_segments_volts_temps(self.data_container)) #For thread safety
                 elif self.data_container.last_updated_list_ID in [6, 7, 8]: #INFO PANEL UPDATES
                     Clock.schedule_once(lambda dt: self.main_layout.update_info_panel(self.data_container))
