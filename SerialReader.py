@@ -63,6 +63,7 @@ class SerialReader(threading.Thread):
                         self.serial_port = serial.Serial(port = "COM" + str(p), baudrate = self.baudrate, bytesize = self.bytesize)
                         conn_success = True
                         self.COM_port_number = "COM" + str(p)
+                        break #Choose the first available port (lowest first!)
                     except Exception as e:
                         pass #This port didn't work, try the next ones
                 

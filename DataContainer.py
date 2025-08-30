@@ -2,7 +2,7 @@ import json
 
 MAX_CELL_VOLTAGE = 4.3
 MIN_CELL_VOLTAGE = 3.0
-MAX_CELL_TEMP = 60
+MAX_CELL_TEMP = 45 #Temp at which we issue a warning
 
 class DataContainer():
     def __init__(self, debug):
@@ -35,11 +35,11 @@ class DataContainer():
         self.info_panel_data_values = ['N/A'] * self.info_panel_labels
 
     def generate_cell_temp_volt_warnings(self):
-        #This is called when voltages OR temps have just been updated and we want to see whether any cell has gone bad
+        #This function is called when voltages OR temps have just been updated and we want to see whether any cell has gone bad
         for idx in range(self.cell_pairs):
-            self.volt_or_temp_warnings[idx] = ((self.voltages[idx] > MAX_CELL_VOLTAGE) or (self.voltages[idx] < MIN_CELL_VOLTAGE)\
-                                               or (self.temperatures[idx] != '-' and self.temperatures[idx] > MAX_CELL_TEMP))
-            #Make sure to ignore the dashes in the places where the temperature is 0 or 255, only process cells with a value
+            self.volt_or_temp_warnings[idx] = ((self.voltages[idx]) > MAX_CELL_VOLTAGE) or (self.voltages[idx] < MIN_CELL_VOLTAGE)\
+                                               or ((self.temperatures[idx] is not None) and self.temperatures[idx] > MAX_CELL_TEMP)
+            #Ignore 'None' temps/cells with no temp sensors
             
     def update_info_panel_data_values(self):
         data_range = (None, None)
@@ -115,7 +115,7 @@ class DataContainer():
 
                     for i in range(len(self.temperatures)):
                         if self.temperatures[i] == 0 or self.temperatures[i] == 255:
-                            self.temperatures[i] = '-' #Remove the readings in the cells where there are no temp sensors
+                            self.temperatures[i] = None #Remove the readings in the cells where there are no temp sensors
                     
                     self.generate_cell_temp_volt_warnings() #First remove the 0 readings then proceed
 

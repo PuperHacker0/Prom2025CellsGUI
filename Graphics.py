@@ -11,7 +11,9 @@ class CellArrangement:
     def is_unused_cell_idx(x, y):
         return (x == 3 and (y == 0 or y == 1)) or (x == 7 and (y == 16 or y == 17))
 
-    def array_traversal_index_mapping(x, y):
+    def array_traversal_index_mapping(x, y): #Segment, Cell
+        if CellArrangement.is_unused_cell_idx(x, y):
+            return None
         #ITERATOR FUNCTION: Change the order of traversal function in case the layout or sensor positions change
         #Here we create the standard winding order of traversal (see image)
 
@@ -66,10 +68,10 @@ class Segment(GridLayout):
 
     def configure_cells(self, texts, warnings = None, segment_number = -1): #Update label text and label color if warnings arise
         self.clear_widgets() #Erase previous labels and update
-        #Don't re-create and re-link 142 widgets, just create new segments and add them to the already existing structure for efficiency
+        #Don't re-create and re-link all the widgets, just create new segments and add them to the already existing structure for efficiency
 
         try:
-            font_size = 24 #Large numbers
+            font_size = 22 #Large numbers
             border_color = (1, 1, 1, 0.7) #Faded white outline
             border_width = 1.5
             size_hint = (1, 1) # Fill cell out
@@ -109,32 +111,30 @@ class MainLayout(BoxLayout):
                 border_width = 2, size_hint = (1, 1), color = (1, 1, 1, 1), background_color = (0.1, 0.1, 0.1, 1))
             self.ids.info_panel.add_widget(label)
 
-    def get_label_text_from_data(self, volts, temps, x, y):
+    def get_label_text_from_data(self, volts, temps, cell_1D_idx):
         #Special cases: top right (2) and bottom left (2) unused cells
-        if CellArrangement.is_unused_cell_idx(x, y):
-            return '' #Empty cell
+        if cell_1D_idx is None:
+            return '' #Unused cell
         
         #For all the other cells, linearize the 2D indices to the 1D data arrays we have
         #Careful because the data array has 140 entries but the GUI has 144 cells (4 empty)
         #So we need to go 2 indices back in the array, for all the cells after the 2 top right unused ones
-        arr_idx_1D = CellArrangement.array_traversal_index_mapping(x, y)
 
-        if temps[arr_idx_1D] == '-': #If temp sensor unavailable, return just the voltage
-            return f"{volts[arr_idx_1D]}V"
+        if temps[cell_1D_idx] == None: #If temp sensor unavailable, return just the voltage
+            return f"{volts[cell_1D_idx]}V"
         else:
-            return f"{volts[arr_idx_1D]}V   {temps[arr_idx_1D]}°C" #Return the cell's label to the caller
+            return f"{volts[cell_1D_idx]}V     {temps[cell_1D_idx]}°C" #Return the cell's label to the caller
 
-    def get_segment_1D_range(self, i): #Filter the top right unused cells
-        a = 18 * i - 2 * int(i >= 3)
-        b = 18 * (i + 1) - 2 * int(i >= 3)
+    #def get_segment_1D_range(self, i): #Filter the top right unused cells
+        #a = 18 * i - 2 * int(i >= 3)
+        #b = 18 * (i + 1) - 2 * int(i >= 3)
 
-        return a, b
+        #return a, b
 
     def float_arr_to_n_decimals(self, floats, n):
         return [int(f * 10**n) / 10**n for f in floats]
 
-    def update_segments_volts_temps(self, data_container): #First obvious update function for each of the individual cells
-        #print("\n\nUPDATING VOLTS OR TEMPS\n\n")
+    def update_segments_volts_temps(self, data_container): #Update function for each of the individual cells
         #Limit data count to cell_count if more values are provided
         cell_pairs = data_container.cell_pairs
         volts = self.float_arr_to_n_decimals(data_container.voltages, CELL_VOLTAGE_DECIMALS)
@@ -142,14 +142,24 @@ class MainLayout(BoxLayout):
         warnings = data_container.volt_or_temp_warnings
 
         #Update each individual segment. Segments are built left to right, top to bottom
-        # 1 2 3 4
-        # 5 6 7 8
+        # 0 1 2 3
+        # 4 5 6 7
         for i in range(8):
-            #Generate texts for each segment
-            segment_texts = [self.get_label_text_from_data(volts, temps, i, j) for j in range(18)]
+            #Generate texts for each segment based on the data
+            #Generate flags/colors for each segment based on the warnings
+            segment_texts, segment_warnings = [], []
+            
+            for j in range(18):
+                cell_1D_idx = CellArrangement.array_traversal_index_mapping(i, j)
 
-            (a, b) = self.get_segment_1D_range(i) #Pass the part of the warnings array that concerns this segment
-            self.segments[i].configure_cells(segment_texts, warnings[a:b], i)
+                segment_texts.append(self.get_label_text_from_data(volts, temps, cell_1D_idx))
+                
+                if cell_1D_idx is not None: #Not an unused cell
+                    segment_warnings.append(warnings[cell_1D_idx])
+                else:
+                    segment_warnings.append(False) #We still have to cover this index even if it is unused so as not to jumble the order
+
+            self.segments[i].configure_cells(segment_texts, segment_warnings, i)
 
     def update_info_panel(self, data_container):
         self.ids.info_panel.clear_widgets() #Erase previous labels to update
@@ -172,6 +182,12 @@ class MainLayout(BoxLayout):
                 data_values[i] += 'V'
             elif data_categories[i] in ["Current", "Target_Current", "Output_Current"]:
                 data_values[i] += 'A'
+            elif data_categories[i] in ["Ams_Error", "Imd_Error", "AIR_P_Supp", "AIR_M_Supp", "AIR_P_State", "AIR_M_State", "over60_dclink", "Elcon_connected", "Target_charge_state", "Elcon_charge_status"]:
+                #Convert 0/1 to NO/YES
+                if data_values[i] == '0':
+                    data_values[i] = "OFF"
+                elif data_values[i] == '1':
+                    data_values[i] = "ON"
             #We can later assign postfixes to the other info panel variables too...
 
         #Then, process the data labels themselves now that a change here won't affect the data value processing

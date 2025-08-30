@@ -9,7 +9,7 @@ import time
 
 def generate_random_json():
     humidities = [random.randint(0, 99) for _ in range(16)]
-    temperatures = [random.randint(25, 61) for _ in range(140)]
+    temperatures = [random.randint(25, 50) for _ in range(140)]
 
     #Have n cells without temp sensors
     loc = [random.randint(0, 139) for _ in range(50)]
@@ -66,7 +66,7 @@ def generate_random_json():
 
     return data
 
-def chunk_string(s, min_size=50, max_size=200):
+def chunk_string(s, min_size = 50, max_size = 200):
     chunks = []
     i = 0
     while i < len(s):
@@ -75,7 +75,7 @@ def chunk_string(s, min_size=50, max_size=200):
         i += size
     return chunks
 
-def send_json_via_serial(data, port, baudrate=9600):
+def send_json_via_serial(data, port, baudrate = 9600):
     try:
         ser = serial.Serial(port, baudrate, timeout=1)
         json_string = json.dumps(data) + '\n'

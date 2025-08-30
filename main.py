@@ -1,3 +1,6 @@
+#IMPORTANT: THE INPUT PORT WILL BE THE SMALLEST IN NUMBER COM PORT THAT SENDS DATA
+#THIS MEANS THAT OTHER COM DEVICES SUCH AS BLUETOOTH OR KEYBOARDS MAY CAUSE INTERFERENCE IF YOU DONT FIX THE INPUT PORT MANUALLY!
+
 #Important: the order of (0), (1), (2), (3) is specific
 #Define fundamental variables of the app (0)
 FORCE_WINDOW_SIZE = None #Overrides forced fullscreen
@@ -36,13 +39,13 @@ class MyApp(App):
         self.running = True
 
         #Initialize and start the serial reader of the port and the data logger
-        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE) #, specified_port = 1) #Change the input port to debug
+        self.serial_reader = SerialReader(debug_mode = DEBUG_MODE)
         self.data_logger = Datalogger("serial_input_log.txt", debug_mode = DEBUG_MODE, buffer_size = 10) #Write every n messages
 
         self.serial_reader.start()
         self.data_logger.start()
 
-        self.title = "Prom Racing Navios 2025 'στο τσακ' TSAC Viewer"
+        self.title = "Prom Racing Navios 2026 TSAC Viewer"
         self.icon = 'icon.ico' #When running app as a script, the taskbar icon will be the default python logo
         #But when running as an exectutable, it will automatically sync to the window icon
 
